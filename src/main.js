@@ -1,52 +1,109 @@
-import kaplay from "kaplay";
-// import "kaplay/global"; // uncomment if you want to use without the k. prefix
+import { kaplay } from "kaplay";
 
+const FLOOR_HEIGHT = 48;
+const JUMP_FORCE = 750;
+let SPEED = 300;
+
+// initialize context
 kaplay();
 
-// load a sprite "bean" from an image
+// load assets
 loadSprite("bean", "sprites/bean.png");
 
-// putting together our player character
-const bean = add([sprite("bean"), pos(80, 40), area(), body()]);
+scene("game", () => {
+    // define gravity
+    setGravity(1600);
 
-// .jump() when "space" key is pressed
-onKeyPress("space", () => {
-    if (bean.isGrounded()) {
-        bean.jump();
-    }
-});
-
-bean.onCollide("tree", () => {
-    addKaboom(bean.pos);
-    shake();
-});
-
-// add platform
-add([
-    rect(width(), 58),
-    pos(0, height() - 48),
-    outline(4),
-    area(),
-    body({ isStatic: true }),
-    color(127, 200, 255),
-]);
-
-function spawnTree() {
-    add([
-        rect(48, rand(24, 64)),
+    // add a game object to screen
+    const player = add([
+        // list of components
+        sprite("bean"),
+        pos(80, 40),
         area(),
-        outline(4),
-        pos(width(), height() - 48),
-        anchor("botleft"),
-        color(255, 180, 255),
-        move(LEFT, 240),
-        "tree",
+        body(),
     ]);
-    wait(rand(0.5, 1.5), () => {
-        spawnTree();
+
+    // floor
+    add([
+        rect(width(), FLOOR_HEIGHT),
+        outline(4),
+        pos(0, height()),
+        anchor("botleft"),
+        area(),
+        body({ isStatic: true }),
+        color(127, 200, 255),
+    ]);
+
+    function jump() {
+        if (player.isGrounded()) {
+            player.jump(JUMP_FORCE);
+        }
+    }
+
+    // jump when user press space
+    onKeyPress("space", jump);
+    onClick(jump);
+
+    function spawnTree() {
+        // add tree obj
+        add([
+            rect(48, rand(32, 96)),
+            area(),
+            outline(4),
+            pos(width(), height() - FLOOR_HEIGHT),
+            anchor("botleft"),
+            color(255, 180, 255),
+            move(LEFT, SPEED),
+            "tree",
+        ]);
+
+        // wait a random amount of time to spawn next tree
+        wait(rand(1, 1.5), spawnTree);
+    }
+
+    // start spawning trees
+    spawnTree();
+
+    // lose if player collides with any game obj with tag "tree"
+    player.onCollide("tree", () => {
+        // go to "lose" scene and pass the score
+        go("lose", score);
+        burp();
+        addKaboom(player.pos);
     });
-}
 
-spawnTree();
+    // keep track of score
+    let score = 0;
 
-setGravity(1600);
+    const scoreLabel = add([text(score), pos(24, 24)]);
+
+    // increment score every frame
+    onUpdate(() => {
+        score++;
+        scoreLabel.text = score;
+        SPEED += 0.01;
+    });
+});
+
+scene("lose", (score) => {
+    add([
+        sprite("bean"),
+        pos(width() / 2, height() / 2 - 80),
+        scale(2),
+        anchor("center"),
+    ]);
+
+    // display score
+    add([
+        text(score),
+        pos(width() / 2, height() / 2 + 80),
+        scale(2),
+        anchor("center"),
+    ]);
+
+    // go back to game with space is pressed
+    onKeyPress("space", () => go("game"));
+    onClick(() => go("game"));
+});
+
+go("game");
