@@ -8,11 +8,47 @@ let SPEED = 300;
 kaplay();
 
 // load assets
-loadSprite("bean", "sprites/bean.png");
+loadSound("backgroundMusic", "public/music/backgroundMusic.mp3");
+loadSprite("backgroundImage", "public/sprites/background-image.jpg");
+loadSprite("bean", "public/sprites/bean.png");
 
 scene("game", () => {
     // define gravity
     setGravity(1600);
+
+    // Adiciona dois fundos para criar o efeito de loop infinito
+    const bg1 = add([
+        sprite("backgroundImage"),
+        pos(0, 0),
+        scale(width() / 1024, height() / 572),
+        fixed(),
+        z(-1),
+        move(LEFT, SPEED / 10),
+        "background",
+    ]);
+
+    const bg2 = add([
+        sprite("backgroundImage"),
+        pos(width(), 0),
+        scale(width() / 1024, height() / 572),
+        fixed(),
+        z(-1),
+        move(LEFT, SPEED / 10),
+        "background",
+    ]);
+
+    // Quando um fundo sai da tela, move ele para o final da fila
+    onUpdate("background", (bg) => {
+        if (bg.pos.x <= -width()) {
+            bg.pos.x += width() * 2;
+        }
+    });
+
+    // Atualiza a escala do fundo caso a janela seja redimensionada
+    onResize(() => {
+        bg1.scale = vec2(width() / 1024, height() / 572);
+        bg2.scale = vec2(width() / 1024, height() / 572);
+    });
 
     // add a game object to screen
     const player = add([
@@ -26,12 +62,10 @@ scene("game", () => {
     // floor
     add([
         rect(width(), FLOOR_HEIGHT),
-        outline(4),
         pos(0, height()),
         anchor("botleft"),
         area(),
         body({ isStatic: true }),
-        color(127, 200, 255),
     ]);
 
     function jump() {
@@ -107,3 +141,8 @@ scene("lose", (score) => {
 });
 
 go("game");
+const backgroundMusic = play("backgroundMusic", {
+    volume: 0.5, // set the volume to 50%
+    speed: 1, // speed up the sound
+    loop: true, // loop the sound
+});
