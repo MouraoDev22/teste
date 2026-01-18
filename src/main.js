@@ -10,7 +10,7 @@ kaplay();
 // load assets
 loadSound("backgroundMusic", "public/music/backgroundMusic.mp3");
 loadSprite("backgroundImage", "public/sprites/background-image.jpg");
-loadSprite("bean", "public/sprites/bean.png");
+loadSprite("pennywise", "public/sprites/pennywise/pennywise.png");
 
 scene("game", () => {
     // define gravity
@@ -53,7 +53,7 @@ scene("game", () => {
     // add a game object to screen
     const player = add([
         // list of components
-        sprite("bean"),
+        sprite("pennywise"),
         pos(80, 40),
         area(),
         body(),
@@ -121,7 +121,7 @@ scene("game", () => {
 
 scene("lose", (score) => {
     add([
-        sprite("bean"),
+        sprite("pennywise"),
         pos(width() / 2, height() / 2 - 80),
         scale(2),
         anchor("center"),
