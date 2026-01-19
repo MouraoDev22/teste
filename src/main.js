@@ -138,7 +138,6 @@ scene("game", () => {
 
     onKeyPress("space", jump);
     onClick(jump);
-    ontouchstart(jump);
 
     // --- Obstacles ---
     function spawnTree() {
