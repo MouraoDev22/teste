@@ -8,9 +8,33 @@ let SPEED = 300;
 kaplay();
 
 // load assets
-loadSound("backgroundMusic", "public/music/backgroundMusic.mp3");
-loadSprite("backgroundImage", "public/sprites/background-image.jpg");
-loadSprite("pennywise", "public/sprites/pennywise/pennywise.png");
+loadSound("backgroundMusic", "music/backgroundMusic.mp3");
+loadSprite("backgroundImage", "sprites/background-image.jpg");
+loadSprite("pennywise", "sprites/pennywise/pennywise.png")
+loadSprite("pennywiseRunning", "sprites/pennywise/pennywise-running.png", {
+    sliceX: 6,
+    sliceY: 6,
+    anims: {
+        run: {
+            from: 0,
+            to: 35,
+            speed: 30,
+            loop: true,
+        },
+    },
+});
+loadSprite("pennywiseJumping", "sprites/pennywise/pennywise-jumping.png", {
+    sliceX: 6,
+    sliceY: 6,
+    anims: {
+        jump: {
+            from: 0,
+            to: 35,
+            speed: 20,
+            loop: false,
+        }
+    }
+})
 
 scene("game", () => {
     // define gravity
@@ -51,13 +75,16 @@ scene("game", () => {
     });
 
     // add a game object to screen
-    const player = add([
+    let player = add([
         // list of components
-        sprite("pennywise"),
+        sprite("pennywiseRunning"),
         pos(80, 40),
         area(),
         body(),
+        scale(0.6),
     ]);
+
+    player.play("run");
 
     // floor
     add([
@@ -69,8 +96,10 @@ scene("game", () => {
     ]);
 
     function jump() {
+        player.sprite("pennywiseJumping");
         if (player.isGrounded()) {
             player.jump(JUMP_FORCE);
+            player.play("run")
         }
     }
 
@@ -123,7 +152,7 @@ scene("lose", (score) => {
     add([
         sprite("pennywise"),
         pos(width() / 2, height() / 2 - 80),
-        scale(2),
+        scale(0.6),
         anchor("center"),
     ]);
 
