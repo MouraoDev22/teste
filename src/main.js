@@ -31,7 +31,7 @@ loadSprite("pennywiseJumping", "sprites/pennywise/pennywise-jumping.png", {
         jump: {
             from: 0,
             to: 35,
-            speed: 30,
+            speed: 50,
             loop: false,
         }
     }
