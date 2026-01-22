@@ -36,19 +36,35 @@ loadSprite("pennywiseJumping", "sprites/pennywise/pennywise-jumping.png", {
         }
     }
 });
+loadSprite("child", "sprites/child1/child-running.png", {
+    sliceX: 6,
+    sliceY: 6,
+    anims: {
+        run: {
+            from: 0,
+            to: 35,
+            speed: 70,
+            loop: true,
+        },
+    },
+});
+loadSprite("boneco-de-neve", "sprites/obstáculos/boneco-de-neve.png",);
 
-loadShader("gloomy", null, `
+loadShader("selectiveRed", null, `
     vec4 frag(vec2 pos, vec2 uv, vec4 color, sampler2D tex) {
         vec4 c = def_frag();
-        float dist = distance(uv, vec2(0.5, 0.5));
-        float vignette = 1.0 - smoothstep(0.4, 1.0, dist);
-        return vec4(c.rgb * vignette * vec3(0.7, 0.5, 0.5), c.a);
+        float gray = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+        gray = (gray - 0.5) * 1.5 + 0.6;
+        float redness = c.r - max(c.g, c.b);
+        float mask = smoothstep(0.1, 0.25, redness);
+        vec3 lowSat = mix(vec3(gray), c.rgb, 0.3);
+        return vec4(mix(lowSat * 0.4, c.rgb * 0.4, mask), c.a);
     }
 `);
 
 // --- Game Logic ---
 scene("game", () => {
-    usePostEffect("gloomy");
+    usePostEffect("selectiveRed");
     let speed = INITIAL_SPEED;
     let score = 0;
 
@@ -102,7 +118,7 @@ scene("game", () => {
     // --- Player ---
     let player = add([
         sprite("pennywiseRunning"),
-        pos(300, 640),
+        pos(width() / 5, height() - 90),
         anchor("center"),
         area({ scale: vec2(0.5, 1) }),
         body(),
@@ -110,6 +126,18 @@ scene("game", () => {
     ]);
 
     player.play("run");
+
+    // --- Child ---
+    let child = add([
+        sprite("child"),
+        pos(width() - 140, height() - 90),
+        anchor("center"),
+        area({ scale: vec2(0.5, 1) }),
+        body(),
+        scale(0.35),
+    ]);
+
+    child.play("run");
 
     // --- Level ---
     add([
@@ -142,22 +170,24 @@ scene("game", () => {
     // --- Obstacles ---
     function spawnTree() {
         add([
-            rect(48, rand(32, 96)),
-            area(),
+            sprite("boneco-de-neve"),
+            area({ scale: vec2(0.4, 0.5) }),
             outline(4),
-            pos(width(), height() - FLOOR_HEIGHT),
-            anchor("botleft"),
+            pos(width(), height() - FLOOR_HEIGHT - 40),
+            anchor("center"),
             color(255, 180, 255),
             move(LEFT, speed),
-            "tree",
+            scale(0.2),
+            offscreen({ destroy: true }),
+            "boneco-de-neve",
         ]);
 
-        wait(rand(1, 1.5), spawnTree);
+        wait(rand(2, 2.5), spawnTree);
     }
 
     spawnTree();
 
-    player.onCollide("tree", () => {
+    player.onCollide("boneco-de-neve", () => {
         go("lose", score);
         burp();
         addKaboom(player.pos);
