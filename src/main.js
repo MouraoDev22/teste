@@ -49,6 +49,7 @@ loadSprite("child", "sprites/child1/child-running.png", {
     },
 });
 loadSprite("boneco-de-neve", "sprites/obstáculos/boneco-de-neve.png",);
+loadSprite("balloon", "sprites/coletáveis/balloon.png");
 
 loadShader("selectiveRed", null, `
     vec4 frag(vec2 pos, vec2 uv, vec4 color, sampler2D tex) {
@@ -115,6 +116,24 @@ scene("game", () => {
         ]);
     });
 
+    // --- Balloon ---
+    function spawnBalloon() {
+        add([
+            sprite("balloon"),
+            pos(width(), height() - FLOOR_HEIGHT - 240),
+            area({ scale: vec2(0.4, 0.5) }),
+            anchor("center"),
+            move(LEFT, speed),
+            scale(0.15),
+            offscreen({ destroy: true }),
+            "balloon",
+        ]);
+
+        wait(rand(10, 20), spawnBalloon);
+    }
+
+    spawnBalloon();
+
     // --- Player ---
     let player = add([
         sprite("pennywiseRunning"),
@@ -171,7 +190,7 @@ scene("game", () => {
     function spawnTree() {
         add([
             sprite("boneco-de-neve"),
-            area({ scale: vec2(0.4, 0.5) }),
+            area({ scale: vec2(0.3, 0.5) }),
             outline(4),
             pos(width(), height() - FLOOR_HEIGHT - 40),
             anchor("center"),
@@ -197,8 +216,8 @@ scene("game", () => {
     const scoreLabel = add([text(score), pos(24, 24)]);
 
     onUpdate(() => {
-        score++;
-        scoreLabel.text = score;
+        score += 0.05;
+        scoreLabel.text = score.toFixed();
         speed += 0.01;
     });
 });
@@ -212,7 +231,7 @@ scene("lose", (score) => {
     ]);
 
     add([
-        text(score),
+        text(score.toFixed()),
         pos(width() / 2, height() / 2 + 80),
         scale(2),
         anchor("center"),
@@ -226,7 +245,7 @@ scene("lose", (score) => {
 go("game");
 
 const backgroundMusic = play("backgroundMusic", {
-    volume: 0.5,
+    volume: 0.3,
     speed: 1,
     loop: true,
 });
