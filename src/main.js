@@ -116,24 +116,6 @@ scene("game", () => {
         ]);
     });
 
-    // --- Balloon ---
-    function spawnBalloon() {
-        add([
-            sprite("balloon"),
-            pos(width(), height() - FLOOR_HEIGHT - 240),
-            area({ scale: vec2(0.4, 0.5) }),
-            anchor("center"),
-            move(LEFT, speed),
-            scale(0.15),
-            offscreen({ destroy: true }),
-            "balloon",
-        ]);
-
-        wait(rand(10, 20), spawnBalloon);
-    }
-
-    spawnBalloon();
-
     // --- Player ---
     let player = add([
         sprite("pennywiseRunning"),
@@ -145,6 +127,50 @@ scene("game", () => {
     ]);
 
     player.play("run");
+
+    // --- Balloon ---
+    function spawnBalloon() {
+        add([
+            sprite("balloon"),
+            pos(width(), height() - FLOOR_HEIGHT - 270),
+            area({ scale: vec2(0.4, 0.5) }),
+            anchor("top"),
+            move(LEFT, speed),
+            scale(0.15),
+            offscreen({ destroy: true }),
+            "balloon",
+        ]);
+
+        wait(rand(10, 20), spawnBalloon);
+    }
+
+    spawnBalloon();
+
+    player.onCollide("balloon", (balloon) => {
+        destroy(balloon);
+
+        for (let i = 0; i < 15; i++) {
+            add([
+                rect(rand(3, 5), rand(3, 5)),
+                pos(balloon.pos),
+                color(rand(0, 255), rand(0, 255), rand(0, 255)),
+                anchor("center"),
+                move(vec2(rand(-1, 1), rand(-1, 1)).unit(), rand(100, 300)),
+                rotate(rand(0, 360)),
+            ]);
+        };
+
+        score += 50;
+        add([
+            text("+50"),
+            pos(balloon.pos),
+            color(255, 0, 0),
+            anchor("center"),
+            move(UP, 100),
+            offscreen({ destroy: true }),
+            "balloon-score"
+        ]);
+    });
 
     // --- Child ---
     let child = add([
@@ -165,8 +191,8 @@ scene("game", () => {
         anchor("botleft"),
         area(),
         body({ isStatic: true }),
-        color(255, 180, 255),
-        outline(4),
+        color(255, 255, 255),
+        outline(2),
         "floor",
     ]);
 
@@ -175,8 +201,8 @@ scene("game", () => {
             player.use(sprite("pennywiseJumping"));
             player.play("jump");
             player.jump(JUMP_FORCE);
-        }
-    }
+        };
+    };
 
     player.onGround(() => {
         player.use(sprite("pennywiseRunning"));
@@ -187,29 +213,25 @@ scene("game", () => {
     onClick(jump);
 
     // --- Obstacles ---
-    function spawnTree() {
+    function spawnObstacle() {
         add([
             sprite("boneco-de-neve"),
             area({ scale: vec2(0.3, 0.5) }),
-            outline(4),
             pos(width(), height() - FLOOR_HEIGHT - 40),
             anchor("center"),
-            color(255, 180, 255),
             move(LEFT, speed),
             scale(0.2),
             offscreen({ destroy: true }),
             "boneco-de-neve",
         ]);
 
-        wait(rand(2, 2.5), spawnTree);
+        wait(rand(2, 2.5), spawnObstacle);
     }
 
-    spawnTree();
+    spawnObstacle();
 
     player.onCollide("boneco-de-neve", () => {
         go("lose", score);
-        burp();
-        addKaboom(player.pos);
     });
 
     // --- UI & Score ---
@@ -223,6 +245,15 @@ scene("game", () => {
 });
 
 scene("lose", (score) => {
+    const bg1 = add([
+        sprite("backgroundImage"),
+        pos(0, 0),
+        scale(width() / 1024, height() / 572),
+        fixed(),
+        z(-1),
+        "background",
+    ]);
+    
     add([
         sprite("pennywise"),
         pos(width() / 2, height() / 2 - 80),
