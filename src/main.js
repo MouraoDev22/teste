@@ -65,13 +65,13 @@ loadShader("selectiveRed", null, `
 
 // --- Game Logic ---
 scene("game", () => {
+    // 1. Setup & Variables
     usePostEffect("selectiveRed");
     let speed = INITIAL_SPEED;
     let score = 0;
-
     setGravity(1600);
 
-    // --- Background ---
+    // 2. Environment (Background, Floor, Snow)
     const bg1 = add([
         sprite("backgroundImage"),
         pos(0, 0),
@@ -103,88 +103,6 @@ scene("game", () => {
         bg2.scale = vec2(width() / 1024, height() / 572);
     });
 
-    // --- Snow ---
-    loop(0.05, () => {
-        add([
-            circle(rand(1, 3)),
-            pos(rand(0, width()), -10),
-            color(255, 255, 255),
-            move(DOWN, rand(20, 100)),
-            opacity(rand(0.5, 0.8)),
-            offscreen({ destroy: true }),
-            z(100),
-        ]);
-    });
-
-    // --- Player ---
-    let player = add([
-        sprite("pennywiseRunning"),
-        pos(width() / 5, height() - 90),
-        anchor("center"),
-        area({ scale: vec2(0.5, 1) }),
-        body(),
-        scale(0.6),
-    ]);
-
-    player.play("run");
-
-    // --- Balloon ---
-    function spawnBalloon() {
-        add([
-            sprite("balloon"),
-            pos(width(), height() - FLOOR_HEIGHT - 270),
-            area({ scale: vec2(0.4, 0.5) }),
-            anchor("top"),
-            move(LEFT, speed),
-            scale(0.15),
-            offscreen({ destroy: true }),
-            "balloon",
-        ]);
-
-        wait(rand(10, 20), spawnBalloon);
-    }
-
-    spawnBalloon();
-
-    player.onCollide("balloon", (balloon) => {
-        destroy(balloon);
-
-        for (let i = 0; i < 15; i++) {
-            add([
-                rect(rand(3, 5), rand(3, 5)),
-                pos(balloon.pos),
-                color(rand(0, 255), rand(0, 255), rand(0, 255)),
-                anchor("center"),
-                move(vec2(rand(-1, 1), rand(-1, 1)).unit(), rand(100, 300)),
-                rotate(rand(0, 360)),
-            ]);
-        };
-
-        score += 50;
-        add([
-            text("+50"),
-            pos(balloon.pos),
-            color(255, 0, 0),
-            anchor("center"),
-            move(UP, 100),
-            offscreen({ destroy: true }),
-            "balloon-score"
-        ]);
-    });
-
-    // --- Child ---
-    let child = add([
-        sprite("child"),
-        pos(width() - 140, height() - 90),
-        anchor("center"),
-        area({ scale: vec2(0.5, 1) }),
-        body(),
-        scale(0.35),
-    ]);
-
-    child.play("run");
-
-    // --- Level ---
     add([
         rect(width(), FLOOR_HEIGHT),
         pos(0, height()),
@@ -196,6 +114,43 @@ scene("game", () => {
         "floor",
     ]);
 
+    loop(0.05, () => {
+        add([
+            circle(rand(1, 3)),
+            pos(rand(0, width()), -10),
+            color(255, 255, 255),
+            move(DOWN, rand(20, 100)),
+            opacity(rand(0.5, 0.8)),
+            offscreen({ destroy: true }),
+            z(100),
+            "snow",
+        ]);
+    });
+
+    // 3. Characters (Player, Child)
+    const player = add([
+        sprite("pennywiseRunning"),
+        pos(width() / 5, height() - 90),
+        anchor("center"),
+        area({ scale: vec2(0.5, 1) }),
+        body(),
+        scale(0.6),
+    ]);
+
+    player.play("run");
+
+    const child = add([
+        sprite("child"),
+        pos(width() - 140, height() - 90),
+        anchor("center"),
+        area({ scale: vec2(0.5, 1) }),
+        body(),
+        scale(0.35),
+    ]);
+
+    child.play("run");
+
+    // 4. Input & Control
     function jump() {
         if (player.isGrounded()) {
             player.use(sprite("pennywiseJumping"));
@@ -212,7 +167,23 @@ scene("game", () => {
     onKeyPress("space", jump);
     onClick(jump);
 
-    // --- Obstacles ---
+    // 5. Spawners
+    function spawnBalloon() {
+        add([
+            sprite("balloon"),
+            pos(width(), height() - FLOOR_HEIGHT - 270),
+            area({ scale: vec2(0.4, 0.5) }),
+            anchor("top"),
+            move(LEFT, speed),
+            scale(0.15),
+            offscreen({ destroy: true }),
+            "balloon",
+        ]);
+
+        wait(rand(10, 20), spawnBalloon);
+    }
+    spawnBalloon();
+
     function spawnObstacle() {
         add([
             sprite("boneco-de-neve"),
@@ -227,14 +198,43 @@ scene("game", () => {
 
         wait(rand(2, 2.5), spawnObstacle);
     }
-
     spawnObstacle();
+
+    // 6. Collisions
+    player.onCollide("balloon", (balloon) => {
+        destroy(balloon);
+
+        for (let i = 0; i < 15; i++) {
+            add([
+                rect(rand(3, 5), rand(3, 5)),
+                pos(balloon.pos),
+                color(rand(0, 255), rand(0, 255), rand(0, 255)),
+                anchor("center"),
+                move(vec2(rand(-1, 1), rand(-1, 1)).unit(), rand(100, 300)),
+                rotate(rand(0, 360)),
+                body(),
+                offscreen({ destroy: true }),
+                "confete"
+            ]);
+        };
+
+        score += 50;
+        add([
+            text("+50"),
+            pos(balloon.pos),
+            color(255, 0, 0),
+            anchor("center"),
+            move(UP, 100),
+            offscreen({ destroy: true }),
+            "balloon-score"
+        ]);
+    });
 
     player.onCollide("boneco-de-neve", () => {
         go("lose", score);
     });
 
-    // --- UI & Score ---
+    // 7. UI & Game Loop
     const scoreLabel = add([text(score), pos(24, 24)]);
 
     onUpdate(() => {
@@ -252,6 +252,17 @@ scene("lose", (score) => {
         fixed(),
         z(-1),
         "background",
+    ]);
+
+    add([
+        rect(width(), FLOOR_HEIGHT),
+        pos(0, height()),
+        anchor("botleft"),
+        area(),
+        body({ isStatic: true }),
+        color(255, 255, 255),
+        outline(2),
+        "floor",
     ]);
     
     add([
